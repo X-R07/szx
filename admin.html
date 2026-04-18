@@ -1,0 +1,778 @@
+lox; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+}
+body::before {
+  content:''; position:fixed; inset:0; z-index:0;
+  background-image:
+    linear-gradient(rgba(0,230,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,230,255,0.025) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events:none;
+}
+
+#app { position:relative; z-index:1; display:flex; flex-direction:column; height:100vh; }
+
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 10px;
+  background:rgba(1,10,20,0.95);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);
+  flex-shrink:0; z-index:50;
+}
+.topbar-logo { font-family:'Orbitron',monospace; font-size:15px; font-weight:900; letter-spacing:2px; color:#fff; }
+.topbar-badge {
+  display:inline-block; margin-left:8px;
+  background:rgba(255,61,107,0.15); border:1px solid rgba(255,61,107,0.3);
+  border-radius:6px; padding:3px 8px;
+  font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; color:var(--red);
+}
+#topbarTitle { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; color:rgba(0,230,255,0.5); }
+.topbar-logout {
+  margin-left:10px; width:32px; height:32px; border-radius:8px;
+  background:rgba(255,61,107,0.1); border:1px solid rgba(255,61,107,0.2);
+  color:var(--red); font-size:14px;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all 0.2s;
+}
+
+.content-area {
+  flex:1; overflow-y:auto; overflow-x:hidden;
+  padding:16px 14px 90px;
+}
+.content-area::-webkit-scrollbar { width:3px; }
+.content-area::-webkit-scrollbar-thumb { background:rgba(0,230,255,0.2); border-radius:2px; }
+
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0;
+  background:rgba(1,8,18,0.97);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(20px);
+  display:flex; justify-content:space-around; align-items:center;
+  padding:8px 4px 12px; z-index:50;
+}
+.nav-btn {
+  display:flex; flex-direction:column; align-items:center; gap:3px;
+  padding:5px 8px; border-radius:10px; cursor:pointer;
+  transition:all 0.2s; border:none; background:none; min-width:44px;
+}
+.nav-btn .ni { font-size:18px; transition:all 0.2s; opacity:0.35; }
+.nav-btn .nl { font-family:'Orbitron',monospace; font-size:7px; letter-spacing:1px; color:rgba(255,255,255,0.25); transition:all 0.2s; }
+.nav-btn.active .ni { opacity:1; filter:drop-shadow(0 0 6px var(--cyan)); }
+.nav-btn.active .nl { color:var(--cyan); }
+.nav-btn.active { background:rgba(0,230,255,0.06); }
+
+.page { display:none; }
+.page.active { display:block; }
+
+.ph { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.ph-title { font-family:'Orbitron',monospace; font-size:17px; font-weight:800; color:#fff; letter-spacing:2px; }
+.ph-sub { font-size:11px; color:var(--muted); margin-top:3px; }
+
+.card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+.card-title {
+  font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px;
+  color:rgba(0,230,255,0.6); margin-bottom:14px;
+  display:flex; align-items:center; gap:8px;
+}
+.card-title::before { content:''; display:block; width:3px; height:12px; border-radius:2px; background:var(--cyan); }
+
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px 14px; }
+.stat-lbl { font-family:'Orbitron',monospace; font-size:7px; letter-spacing:2px; color:rgba(255,255,255,0.3); margin-bottom:10px; }
+.stat-val { font-family:'Orbitron',monospace; font-size:28px; font-weight:800; line-height:1; }
+.stat-sub { font-size:10px; color:var(--muted); margin-top:6px; }
+
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  border:1px solid; border-radius:8px;
+  font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px;
+  padding:8px 14px; cursor:pointer; transition:all 0.2s; white-space:nowrap;
+}
+.btn-sm { padding:6px 11px; font-size:8px; border-radius:7px; }
+.btn-full { width:100%; padding:13px; font-size:10px; border-radius:12px; letter-spacing:2px; }
+.btn-cy { background:rgba(0,230,255,0.08); border-color:rgba(0,230,255,0.25); color:var(--cyan); }
+.btn-gr { background:rgba(0,255,170,0.08); border-color:rgba(0,255,170,0.25); color:var(--green); }
+.btn-rd { background:rgba(255,61,107,0.08); border-color:rgba(255,61,107,0.25); color:var(--red); }
+.btn-or { background:rgba(255,140,66,0.08); border-color:rgba(255,140,66,0.25); color:var(--orange); }
+.btn-pu { background:rgba(191,95,255,0.08); border-color:rgba(191,95,255,0.25); color:var(--purple); }
+
+.fg { margin-bottom:14px; }
+.fl { display:block; font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; color:rgba(0,230,255,0.6); margin-bottom:7px; }
+.fi {
+  width:100%; padding:12px 14px;
+  background:rgba(0,0,0,0.35); border:1px solid var(--border);
+  border-radius:10px; color:#fff;
+  font-family:'Rajdhani',sans-serif; font-size:15px;
+  outline:none; transition:border-color 0.25s; -webkit-appearance:none;
+}
+.fi:focus { border-color:var(--cyan); }
+.fi::placeholder { color:rgba(255,255,255,0.2); }
+select.fi option { background:#0a1628; }
+
+.badge { display:inline-block; padding:3px 9px; border-radius:20px; font-family:'Orbitron',monospace; font-size:8px; letter-spacing:1px; }
+.b-cy { background:rgba(0,230,255,0.1); border:1px solid rgba(0,230,255,0.2); color:var(--cyan); }
+.b-gr { background:rgba(0,255,170,0.1); border:1px solid rgba(0,255,170,0.25); color:var(--green); }
+.b-rd { background:rgba(255,61,107,0.1); border:1px solid rgba(255,61,107,0.25); color:var(--red); }
+
+.urow { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid rgba(0,230,255,0.05); }
+.urow:last-child { border-bottom:none; }
+.av {
+  width:34px; height:34px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron',monospace; font-size:13px; font-weight:700; color:#000;
+}
+.av.rd { background:linear-gradient(135deg,var(--red),var(--orange)); }
+.av.sm { width:28px; height:28px; font-size:11px; }
+.uinfo { flex:1; min-width:0; }
+.uname { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.umeta { font-size:10px; color:var(--muted); margin-top:2px; }
+.uval { font-family:'Orbitron',monospace; font-size:12px; color:var(--cyan); flex-shrink:0; }
+
+.jrow { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:12px; padding:12px; margin-bottom:8px; }
+.jicon { font-size:22px; flex-shrink:0; }
+.jinfo { flex:1; min-width:0; }
+.jtitle { font-size:13px; font-weight:600; color:#fff; }
+.jmeta { font-size:10px; color:var(--muted); margin-top:2px; }
+.jreward { font-family:'Orbitron',monospace; font-size:12px; color:var(--green); flex-shrink:0; }
+.jbtns { display:flex; gap:6px; flex-shrink:0; }
+
+.ebar-wrap { display:flex; align-items:center; gap:8px; }
+.ebar-bg { flex:1; height:7px; background:rgba(255,255,255,0.06); border-radius:4px; overflow:hidden; }
+.ebar-fill { height:100%; border-radius:4px; transition:width 0.4s; }
+.ebar-lbl { font-family:'Orbitron',monospace; font-size:11px; color:var(--muted); flex-shrink:0; width:44px; text-align:right; }
+
+.danger-zone { border:1px solid rgba(255,61,107,0.2); border-radius:12px; padding:14px; background:rgba(255,61,107,0.03); margin-top:12px; }
+.danger-lbl { font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; color:var(--red); margin-bottom:10px; }
+.div { height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:16px 0; }
+.ibox { background:rgba(0,230,255,0.03); border:1px solid rgba(0,230,255,0.1); border-radius:10px; padding:12px; font-size:12px; color:rgba(255,255,255,0.4); line-height:1.6; }
+
+.moverlay { position:fixed; inset:0; z-index:200; background:rgba(0,0,0,0.75); backdrop-filter:blur(8px); display:flex; align-items:flex-end; justify-content:center; padding:0; }
+.mbox { background:#060e1e; border:1px solid var(--border); border-radius:20px 20px 0 0; padding:24px 18px 32px; width:100%; max-width:520px; max-height:88vh; overflow-y:auto; position:relative; }
+.mbox::-webkit-scrollbar { display:none; }
+.mtitle { font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:2px; color:#fff; margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid var(--border); padding-right:32px; }
+.mclose { position:absolute; top:18px; right:18px; width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:rgba(255,255,255,0.4); font-size:14px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.mfooter { display:flex; gap:10px; margin-top:18px; }
+
+.toast-el { position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); background:rgba(0,12,28,0.95); border:1px solid rgba(0,230,255,0.3); border-radius:10px; padding:11px 22px; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; color:var(--cyan); z-index:9999; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; box-shadow:0 4px 20px rgba(0,0,0,0.4); }
+.toast-el.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.toast-el.green { color:var(--green); border-color:rgba(0,255,170,0.3); }
+.toast-el.red { color:var(--red); border-color:rgba(255,61,107,0.3); }
+
+#loginScreen { position:fixed; inset:0; z-index:300; background:var(--bg); display:flex; align-items:center; justify-content:center; padding:24px; }
+.lw { width:100%; max-width:360px; }
+.l-logo { font-family:'Orbitron',monospace; font-size:24px; font-weight:900; letter-spacing:4px; color:#fff; text-shadow:0 0 40px rgba(0,230,255,0.4); text-align:center; margin-bottom:4px; }
+.l-sub { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:3px; color:rgba(255,61,107,0.6); text-align:center; margin-bottom:36px; }
+.l-orb { width:80px; height:80px; border-radius:50%; background:radial-gradient(circle at 40% 35%,rgba(0,230,255,0.15),rgba(2,8,24,0.95) 70%); border:1.5px solid rgba(0,230,255,0.25); display:flex; align-items:center; justify-content:center; margin:0 auto 36px; font-size:30px; box-shadow:0 0 40px rgba(0,230,255,0.1); animation:orbf 3s ease-in-out infinite; }
+@keyframes orbf { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.l-err { color:var(--red); font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; text-align:center; min-height:18px; margin-top:10px; }
+.l-hint { font-size:11px; color:rgba(255,255,255,0.25); text-align:center; margin-top:16px; }
+.l-hint span { color:var(--cyan); }
+
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="toast-el" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lw">
+    <div class="l-orb">⬡</div>
+    <div class="l-logo">NEXUS</div>
+    <div class="l-sub">ADMIN CONTROL PANEL</div>
+    <div class="fg"><label class="fl">USERNAME</label><input class="fi" id="li_u" type="text" placeholder="Username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div class="fg"><label class="fl">PASSWORD</label><input class="fi" id="li_p" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-rd btn-full" onclick="doLogin()">⚡ ACCESS PANEL</button>
+    <div class="l-err" id="li_e"></div>
+    <div class="l-hint">Default: <span>admin</span> / <span>admin123</span></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div>
+      <span class="topbar-logo">⬡ NEXUS</span>
+      <span class="topbar-badge">ADMIN</span>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <span id="topbarTitle">DASHBOARD</span>
+      <div class="topbar-logout" onclick="doLogout()">⏏</div>
+    </div>
+  </div>
+
+  <div class="content-area" id="ca">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="pg-dash">
+      <div class="ph">
+        <div><div class="ph-title">DASHBOARD</div><div class="ph-sub">System overview</div></div>
+        <button class="btn btn-cy btn-sm" onclick="refreshAll()">↻ REFRESH</button>
+      </div>
+      <div class="stat-grid" id="d-stats"></div>
+      <div class="card"><div class="card-title">TOP MINERS</div><div id="d-top"></div></div>
+      <div class="card"><div class="card-title">ALL USERS</div><div id="d-all"></div></div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page hidden" id="pg-users">
+      <div class="ph">
+        <div><div class="ph-title">USERS</div><div class="ph-sub">Manage accounts</div></div>
+        <button class="btn btn-gr btn-sm" onclick="openAddUser()">+ ADD</button>
+      </div>
+      <div class="fg"><input class="fi" id="u-q" type="text" placeholder="🔍 Search..." oninput="renderUsers()"></div>
+      <div id="u-list"></div>
+    </div>
+
+    <!-- JOBS -->
+    <div class="page hidden" id="pg-jobs">
+      <div class="ph">
+        <div><div class="ph-title">JOBS</div><div class="ph-sub">Task manager</div></div>
+        <button class="btn btn-gr btn-sm" onclick="openAddJob()">+ ADD JOB</button>
+      </div>
+      <div id="j-list"></div>
+      <div id="j-empty" class="ibox hidden" style="text-align:center;padding:24px;">No jobs yet. Add your first job!</div>
+      <div class="div"></div>
+      <div class="ibox">ℹ️ Jobs sync with Nexus Protocol main app's JOB tab via localStorage.</div>
+    </div>
+
+    <!-- BALANCE -->
+    <div class="page hidden" id="pg-balance">
+      <div class="ph"><div><div class="ph-title">BALANCE</div><div class="ph-sub">TON management</div></div></div>
+      <div class="card">
+        <div class="card-title">ADJUST BALANCE</div>
+        <div class="fg"><label class="fl">USER</label><select class="fi" id="b-u"></select></div>
+        <div class="fg"><label class="fl">OPERATION</label>
+          <select class="fi" id="b-op">
+            <option value="add">+ ADD TON</option>
+            <option value="sub">- DEDUCT TON</option>
+            <option value="set">= SET EXACT</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">AMOUNT (TON)</label><input class="fi" id="b-a" type="number" min="0" step="0.0001" placeholder="0.0000"></div>
+        <button class="btn btn-gr btn-full" onclick="doBalance()">✓ APPLY</button>
+      </div>
+      <div class="card">
+        <div class="card-title">BULK AIRDROP</div>
+        <div class="ibox" style="margin-bottom:12px;">Send TON to ALL users simultaneously.</div>
+        <div class="fg"><label class="fl">AMOUNT PER USER (TON)</label><input class="fi" id="air-a" type="number" min="0" step="0.0001" placeholder="0.0000"></div>
+        <button class="btn btn-pu btn-full" onclick="doAirdrop()">🚀 AIRDROP TO ALL</button>
+      </div>
+      <div class="card"><div class="card-title">ALL BALANCES</div><div id="b-list"></div></div>
+      <div class="danger-zone">
+        <div class="danger-lbl">⚠ DANGER ZONE</div>
+        <button class="btn btn-rd btn-full" onclick="resetBal()">🗑 RESET ALL BALANCES TO 0</button>
+      </div>
+    </div>
+
+    <!-- ENERGY -->
+    <div class="page hidden" id="pg-energy">
+      <div class="ph"><div><div class="ph-title">ENERGY</div><div class="ph-sub">Mining power control</div></div></div>
+      <div class="card">
+        <div class="card-title">SET ENERGY</div>
+        <div class="fg"><label class="fl">USER</label><select class="fi" id="e-u"></select></div>
+        <div class="fg"><label class="fl">ENERGY (0-100)</label><input class="fi" id="e-a" type="number" min="0" max="100" placeholder="100"></div>
+        <button class="btn btn-cy btn-full" onclick="doSetEnergy()">⚡ SET ENERGY</button>
+      </div>
+      <div class="card">
+        <div class="g2">
+          <button class="btn btn-gr btn-full" onclick="refillAll()">⚡ REFILL ALL</button>
+          <button class="btn btn-rd btn-full" onclick="drainAll()">🔻 DRAIN ALL</button>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">ENERGY STATUS</div><div id="en-list"></div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page hidden" id="pg-settings">
+      <div class="ph"><div><div class="ph-title">SETTINGS</div><div class="ph-sub">System configuration</div></div></div>
+      <div class="card">
+        <div class="card-title">MINING CONFIG</div>
+        <div class="g2">
+          <div class="fg"><label class="fl">TON/TICK</label><input class="fi" id="c-r" type="number" step="0.0001" placeholder="0.0042"></div>
+          <div class="fg"><label class="fl">ENERGY/TICK</label><input class="fi" id="c-e" type="number" step="1" placeholder="1"></div>
+          <div class="fg"><label class="fl">MAX ENERGY</label><input class="fi" id="c-me" type="number" step="1" placeholder="100"></div>
+          <div class="fg"><label class="fl">REF COMM %</label><input class="fi" id="c-rc" type="number" step="0.1" placeholder="5"></div>
+          <div class="fg"><label class="fl">SIGNUP BONUS</label><input class="fi" id="c-sb" type="number" step="0.01" placeholder="0.05"></div>
+          <div class="fg"><label class="fl">REF BONUS</label><input class="fi" id="c-rb" type="number" step="0.01" placeholder="0.05"></div>
+        </div>
+        <button class="btn btn-cy btn-full" onclick="saveCFG()">💾 SAVE CONFIG</button>
+      </div>
+      <div class="card">
+        <div class="card-title">CHANGE ADMIN CREDENTIALS</div>
+        <div class="fg"><label class="fl">NEW USERNAME</label><input class="fi" id="a-u" type="text" placeholder="New username"></div>
+        <div class="fg"><label class="fl">NEW PASSWORD</label><input class="fi" id="a-p" type="password" placeholder="New password"></div>
+        <div class="fg"><label class="fl">CONFIRM PASSWORD</label><input class="fi" id="a-c" type="password" placeholder="Confirm"></div>
+        <button class="btn btn-or btn-full" onclick="changeAdmin()">🔐 UPDATE CREDENTIALS</button>
+      </div>
+      <div class="danger-zone">
+        <div class="danger-lbl">⚠ DANGER ZONE</div>
+        <button class="btn btn-rd btn-full" onclick="nukeDB()">💥 WIPE ENTIRE DATABASE</button>
+      </div>
+    </div>
+
+  </div><!-- /content-area -->
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="goP('dash',this)"><span class="ni">📊</span><span class="nl">DASH</span></button>
+    <button class="nav-btn" onclick="goP('users',this)"><span class="ni">👥</span><span class="nl">USERS</span></button>
+    <button class="nav-btn" onclick="goP('jobs',this)"><span class="ni">📋</span><span class="nl">JOBS</span></button>
+    <button class="nav-btn" onclick="goP('balance',this)"><span class="ni">💰</span><span class="nl">BALANCE</span></button>
+    <button class="nav-btn" onclick="goP('energy',this)"><span class="ni">⚡</span><span class="nl">ENERGY</span></button>
+    <button class="nav-btn" onclick="goP('settings',this)"><span class="ni">⚙️</span><span class="nl">SETTINGS</span></button>
+  </nav>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="moverlay hidden" id="m-eu">
+  <div class="mbox">
+    <div class="mtitle">✏ EDIT USER</div>
+    <button class="mclose" onclick="cM('m-eu')">✕</button>
+    <input type="hidden" id="eu-k">
+    <div class="fg"><label class="fl">USERNAME</label><input class="fi" id="eu-n" readonly style="opacity:.4;cursor:not-allowed"></div>
+    <div class="fg"><label class="fl">NEW PASSWORD (blank = keep)</label><input class="fi" id="eu-pw" type="text" placeholder="Leave blank to keep"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">TON BALANCE</label><input class="fi" id="eu-t" type="number" step="0.0001" min="0"></div>
+      <div class="fg"><label class="fl">ENERGY (0-100)</label><input class="fi" id="eu-e" type="number" min="0" max="100"></div>
+      <div class="fg"><label class="fl">STREAK (DAYS)</label><input class="fi" id="eu-s" type="number" min="0"></div>
+      <div class="fg"><label class="fl">MINING STREAK</label><input class="fi" id="eu-ms" type="number" min="0"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-gr" style="flex:1;padding:13px;" onclick="saveEU()">✓ SAVE</button>
+      <button class="btn btn-rd" style="padding:13px 18px;" onclick="cM('m-eu')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="moverlay hidden" id="m-au">
+  <div class="mbox">
+    <div class="mtitle">+ ADD USER</div>
+    <button class="mclose" onclick="cM('m-au')">✕</button>
+    <div class="fg"><label class="fl">USERNAME</label><input class="fi" id="au-n" type="text" placeholder="Username"></div>
+    <div class="fg"><label class="fl">PASSWORD</label><input class="fi" id="au-p" type="text" placeholder="Password"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">START BALANCE (TON)</label><input class="fi" id="au-t" type="number" min="0" step="0.0001" value="0"></div>
+      <div class="fg"><label class="fl">START ENERGY</label><input class="fi" id="au-e" type="number" min="0" max="100" value="100"></div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-gr" style="flex:1;padding:13px;" onclick="doAU()">+ CREATE</button>
+      <button class="btn btn-rd" style="padding:13px 18px;" onclick="cM('m-au')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE USER MODAL -->
+<div class="moverlay hidden" id="m-du">
+  <div class="mbox">
+    <div class="mtitle" style="color:var(--red)">⚠ DELETE USER</div>
+    <button class="mclose" onclick="cM('m-du')">✕</button>
+    <input type="hidden" id="du-k">
+    <p style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.7;margin-bottom:16px;">
+      Permanently delete <strong id="du-n" style="color:var(--red)"></strong>? This cannot be undone.
+    </p>
+    <div class="mfooter">
+      <button class="btn btn-rd" style="flex:1;padding:13px;" onclick="doDU()">🗑 DELETE</button>
+      <button class="btn btn-cy" style="padding:13px 18px;" onclick="cM('m-du')">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- JOB MODAL -->
+<div class="moverlay hidden" id="m-job">
+  <div class="mbox">
+    <div class="mtitle" id="m-jt">+ ADD JOB</div>
+    <button class="mclose" onclick="cM('m-job')">✕</button>
+    <input type="hidden" id="j-idx">
+    <div class="fg"><label class="fl">JOB TITLE</label><input class="fi" id="j-ti" type="text" placeholder="e.g. Follow on Twitter"></div>
+    <div class="fg"><label class="fl">DESCRIPTION</label><input class="fi" id="j-de" type="text" placeholder="Short description"></div>
+    <div class="g2">
+      <div class="fg"><label class="fl">REWARD (TON)</label><input class="fi" id="j-rw" type="number" step="0.001" min="0" placeholder="0.05"></div>
+      <div class="fg"><label class="fl">ICON (EMOJI)</label><input class="fi" id="j-ic" type="text" maxlength="4" placeholder="📢"></div>
+    </div>
+    <div class="fg"><label class="fl">LINK (OPTIONAL)</label><input class="fi" id="j-li" type="text" placeholder="https://..."></div>
+    <div class="fg"><label class="fl">TYPE</label>
+      <select class="fi" id="j-ty">
+        <option value="social">Social</option>
+        <option value="mining">Mining</option>
+        <option value="referral">Referral</option>
+        <option value="special">Special</option>
+      </select>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-gr" style="flex:1;padding:13px;" onclick="doSaveJob()">✓ SAVE JOB</button>
+      <button class="btn btn-rd" style="padding:13px 18px;" onclick="cM('m-job')">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const K={db:'nexusDB',jobs:'nexusJobs',cfg:'nexusConfig',adm:'nexusAdminCreds'};
+const gDB=()=>JSON.parse(localStorage.getItem(K.db)||'null')||{users:{}};
+const sDB=d=>localStorage.setItem(K.db,JSON.stringify(d));
+const gJ=()=>JSON.parse(localStorage.getItem(K.jobs)||'[]');
+const sJ=j=>localStorage.setItem(K.jobs,JSON.stringify(j));
+const gCFG=()=>JSON.parse(localStorage.getItem(K.cfg)||'null')||{miningRate:0.0042,energyDrain:1,maxEnergy:100,refCommission:5,signupBonus:0.05,refBonus:0.05};
+const sCFG=c=>localStorage.setItem(K.cfg,JSON.stringify(c));
+const gADM=()=>JSON.parse(localStorage.getItem(K.adm)||'null')||{user:'admin',pass:'admin123'};
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast-el '+type;
+  void t.offsetWidth;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+function cM(id){document.getElementById(id).classList.add('hidden');}
+function oM(id){document.getElementById(id).classList.remove('hidden');}
+document.querySelectorAll('.moverlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.add('hidden');}));
+
+// LOGIN
+document.getElementById('loginScreen').classList.remove('hidden');
+document.getElementById('app').style.display='none';
+
+function doLogin(){
+  const u=document.getElementById('li_u').value.trim();
+  const p=document.getElementById('li_p').value;
+  const e=document.getElementById('li_e');
+  const a=gADM();
+  if(!u||!p){e.textContent='⚠ FILL ALL FIELDS';return;}
+  if(u!==a.user||p!==a.pass){e.textContent='⚠ INVALID CREDENTIALS';return;}
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('app').style.display='flex';
+  refreshAll();
+}
+function doLogout(){
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').classList.remove('hidden');
+  ['li_u','li_p'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('li_e').textContent='';
+}
+
+// NAV
+const PT={dash:'DASHBOARD',users:'USERS',jobs:'JOBS',balance:'BALANCE',energy:'ENERGY',settings:'SETTINGS'};
+function goP(name,el){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.classList.add('hidden');});
+  const pg=document.getElementById('pg-'+name);
+  pg.classList.remove('hidden');pg.classList.add('active');
+  document.getElementById('topbarTitle').textContent=PT[name]||name.toUpperCase();
+  document.getElementById('ca').scrollTop=0;
+  if(name==='users') renderUsers();
+  if(name==='jobs') renderJobs();
+  if(name==='balance'){renderBal();pSels();}
+  if(name==='energy'){renderEn();pSels();}
+  if(name==='settings') loadCFG();
+}
+
+function refreshAll(){renderDash();renderUsers();renderJobs();renderBal();renderEn();pSels();}
+
+// DASHBOARD
+function renderDash(){
+  const db=gDB();const us=Object.entries(db.users);
+  const tt=us.reduce((s,[,d])=>s+(d.ton||0),0);
+  const tr=us.reduce((s,[,d])=>s+(d.referrals?.length||0),0);
+  const ac=us.filter(([,d])=>(d.energy||0)>0).length;
+  document.getElementById('d-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-lbl">TOTAL USERS</div><div class="stat-val" style="color:var(--cyan)">${us.length}</div><div class="stat-sub">Accounts</div></div>
+    <div class="stat-card"><div class="stat-lbl">TON MINED</div><div class="stat-val" style="color:var(--green);font-size:22px">${tt.toFixed(2)}</div><div class="stat-sub">All users</div></div>
+    <div class="stat-card"><div class="stat-lbl">REFERRALS</div><div class="stat-val" style="color:var(--yellow)">${tr}</div><div class="stat-sub">All-time</div></div>
+    <div class="stat-card"><div class="stat-lbl">ACTIVE</div><div class="stat-val" style="color:var(--purple)">${ac}</div><div class="stat-sub">Energy &gt; 0</div></div>`;
+  const top=[...us].sort((a,b)=>b[1].ton-a[1].ton).slice(0,5);
+  document.getElementById('d-top').innerHTML=top.length?top.map(([n,d],i)=>`
+    <div class="urow">
+      <div style="font-family:'Orbitron',monospace;font-size:11px;color:${i===0?'var(--yellow)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--muted)'};width:18px;flex-shrink:0">#${i+1}</div>
+      <div class="av sm">${n[0].toUpperCase()}</div>
+      <div class="uinfo"><div class="uname">${n.toUpperCase()}</div><div class="umeta">Streak: ${d.streak||0}d · Refs: ${d.referrals?.length||0}</div></div>
+      <div class="uval">${(d.ton||0).toFixed(3)}</div>
+    </div>`).join(''):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No users yet</div>`;
+  document.getElementById('d-all').innerHTML=us.length?us.slice().reverse().slice(0,6).map(([n,d])=>`
+    <div class="urow">
+      <div class="av sm">${n[0].toUpperCase()}</div>
+      <div class="uinfo"><div class="uname">${n.toUpperCase()}</div><div class="umeta">${d.energy||0} energy · ${d.referrals?.length||0} refs</div></div>
+      <div class="uval">${(d.ton||0).toFixed(3)}</div>
+    </div>`).join(''):`<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">No users yet</div>`;
+}
+
+// USERS
+function renderUsers(){
+  const db=gDB();const q=(document.getElementById('u-q')?.value||'').toLowerCase();
+  const us=Object.entries(db.users).filter(([n])=>n.includes(q));
+  document.getElementById('u-list').innerHTML=us.length?us.map(([n,d])=>`
+    <div class="card" style="padding:14px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div class="av">${n[0].toUpperCase()}</div>
+        <div class="uinfo">
+          <div class="uname">${n.toUpperCase()}</div>
+          <div class="umeta">Code: ${d.refCode||'—'} · By: ${d.referredBy||'—'}</div>
+        </div>
+        <div style="font-family:'Orbitron',monospace;font-size:13px;color:var(--cyan);flex-shrink:0">${(d.ton||0).toFixed(2)}<span style="font-size:9px;opacity:.6"> TON</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--yellow)">${d.streak||0}</div>
+          <div style="font-size:9px;color:var(--muted)">STREAK</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--green)">${d.energy||0}</div>
+          <div style="font-size:9px;color:var(--muted)">ENERGY</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-family:'Orbitron',monospace;font-size:14px;color:var(--purple)">${d.referrals?.length||0}</div>
+          <div style="font-size:9px;color:var(--muted)">REFS</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-cy" style="flex:1;padding:9px;" onclick="openEU('${n}')">✏ EDIT</button>
+        <button class="btn btn-or btn-sm" onclick="qTon('${n}',1)">+1 TON</button>
+        <button class="btn btn-rd btn-sm" onclick="openDU('${n}')">🗑</button>
+      </div>
+    </div>`).join(''):`<div class="ibox" style="text-align:center;padding:24px;">No users found</div>`;
+}
+
+function openEU(n){
+  const d=gDB().users[n];
+  document.getElementById('eu-k').value=n;
+  document.getElementById('eu-n').value=n;
+  document.getElementById('eu-pw').value='';
+  document.getElementById('eu-t').value=(d.ton||0).toFixed(4);
+  document.getElementById('eu-e').value=d.energy||0;
+  document.getElementById('eu-s').value=d.streak||0;
+  document.getElementById('eu-ms').value=d.miningStreak||0;
+  oM('m-eu');
+}
+function saveEU(){
+  const k=document.getElementById('eu-k').value;const db=gDB();
+  if(!db.users[k])return;
+  const pw=document.getElementById('eu-pw').value;
+  const t=parseFloat(document.getElementById('eu-t').value);
+  const e=parseInt(document.getElementById('eu-e').value);
+  const s=parseInt(document.getElementById('eu-s').value);
+  const ms=parseInt(document.getElementById('eu-ms').value);
+  if(pw)db.users[k].pass=pw;
+  if(!isNaN(t))db.users[k].ton=Math.max(0,t);
+  if(!isNaN(e))db.users[k].energy=Math.min(100,Math.max(0,e));
+  if(!isNaN(s))db.users[k].streak=Math.max(0,s);
+  if(!isNaN(ms))db.users[k].miningStreak=Math.max(0,ms);
+  sDB(db);cM('m-eu');refreshAll();toast('✓ USER UPDATED','green');
+}
+function openAddUser(){
+  ['au-n','au-p'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('au-t').value='0';document.getElementById('au-e').value='100';
+  oM('m-au');
+}
+function doAU(){
+  const n=document.getElementById('au-n').value.trim().toLowerCase();
+  const p=document.getElementById('au-p').value;
+  const t=parseFloat(document.getElementById('au-t').value)||0;
+  const e=parseInt(document.getElementById('au-e').value)||100;
+  const db=gDB();
+  if(!n||!p){toast('⚠ FILL ALL FIELDS','red');return;}
+  if(n.length<3){toast('⚠ USERNAME TOO SHORT','red');return;}
+  if(db.users[n]){toast('⚠ USERNAME TAKEN','red');return;}
+  const code=n.substring(0,3).toUpperCase()+Math.floor(Math.random()*900+100);
+  db.users[n]={pass:p,ton:t,energy:Math.min(100,e),streak:0,refCode:code,referredBy:null,referrals:[],refEarned:0,spinUsed:false,miningStreak:0};
+  sDB(db);cM('m-au');refreshAll();toast('✓ USER CREATED','green');
+}
+function openDU(n){
+  document.getElementById('du-k').value=n;
+  document.getElementById('du-n').textContent=n.toUpperCase();
+  oM('m-du');
+}
+function doDU(){
+  const n=document.getElementById('du-k').value;const db=gDB();
+  Object.values(db.users).forEach(u=>{
+    if(u.referrals)u.referrals=u.referrals.filter(r=>r!==n);
+    if(u.referredBy===n)u.referredBy=null;
+  });
+  delete db.users[n];sDB(db);cM('m-du');refreshAll();toast('✓ DELETED','green');
+}
+
+// JOBS
+function renderJobs(){
+  const jobs=gJ();
+  const list=document.getElementById('j-list');const empty=document.getElementById('j-empty');
+  if(!jobs.length){list.innerHTML='';empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  const tc={social:'var(--cyan)',mining:'var(--green)',referral:'var(--yellow)',special:'var(--purple)'};
+  list.innerHTML=jobs.map((j,i)=>`
+    <div class="jrow">
+      <div class="jicon">${j.icon||'📋'}</div>
+      <div class="jinfo">
+        <div class="jtitle">${j.title}</div>
+        <div class="jmeta">${j.desc||''} · <span style="color:${tc[j.type]||'var(--cyan)'}">${(j.type||'').toUpperCase()}</span></div>
+      </div>
+      <div class="jreward">+${parseFloat(j.reward||0).toFixed(3)}</div>
+      <div class="jbtns">
+        <button class="btn btn-or btn-sm" onclick="editJob(${i})">✏</button>
+        <button class="btn btn-rd btn-sm" onclick="delJob(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+function openAddJob(){
+  ['j-ti','j-de','j-rw','j-ic','j-li'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('j-ty').value='social';
+  document.getElementById('j-idx').value='';
+  document.getElementById('m-jt').textContent='+ ADD JOB';
+  oM('m-job');
+}
+function editJob(i){
+  const j=gJ()[i];
+  document.getElementById('j-ti').value=j.title||'';
+  document.getElementById('j-de').value=j.desc||'';
+  document.getElementById('j-rw').value=j.reward||'';
+  document.getElementById('j-ic').value=j.icon||'';
+  document.getElementById('j-li').value=j.link||'';
+  document.getElementById('j-ty').value=j.type||'social';
+  document.getElementById('j-idx').value=i;
+  document.getElementById('m-jt').textContent='✏ EDIT JOB';
+  oM('m-job');
+}
+function doSaveJob(){
+  const title=document.getElementById('j-ti').value.trim();
+  const reward=parseFloat(document.getElementById('j-rw').value);
+  if(!title){toast('⚠ ENTER TITLE','red');return;}
+  if(isNaN(reward)||reward<0){toast('⚠ INVALID REWARD','red');return;}
+  const jobs=gJ();const idx=document.getElementById('j-idx').value;
+  const job={title,desc:document.getElementById('j-de').value.trim(),reward,icon:document.getElementById('j-ic').value.trim()||'📋',link:document.getElementById('j-li').value.trim(),type:document.getElementById('j-ty').value};
+  if(idx!==''){jobs[parseInt(idx)]=job;toast('✓ UPDATED','green');}
+  else{jobs.push(job);toast('✓ JOB ADDED','green');}
+  sJ(jobs);cM('m-job');renderJobs();
+}
+function delJob(i){
+  if(!confirm('Delete job?'))return;
+  const jobs=gJ();jobs.splice(i,1);sJ(jobs);renderJobs();toast('✓ DELETED','green');
+}
+
+// BALANCE
+function pSels(){
+  const us=Object.keys(gDB().users);
+  ['b-u','e-u'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    el.innerHTML=us.map(u=>`<option value="${u}">${u.toUpperCase()}</option>`).join('');
+  });
+}
+function renderBal(){
+  const db=gDB();
+  document.getElementById('b-list').innerHTML=Object.entries(db.users).sort((a,b)=>b[1].ton-a[1].ton).map(([n,d])=>`
+    <div class="urow">
+      <div class="av sm">${n[0].toUpperCase()}</div>
+      <div class="uinfo"><div class="uname">${n.toUpperCase()}</div><div class="umeta">Streak ${d.streak||0}d · Refs ${d.referrals?.length||0}</div></div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--cyan)">${(d.ton||0).toFixed(3)}</div>
+        <button class="btn btn-gr btn-sm" onclick="qTon('${n}',1)" style="padding:5px 8px;">+1</button>
+      </div>
+    </div>`).join('');
+}
+function doBalance(){
+  const u=document.getElementById('b-u').value;
+  const op=document.getElementById('b-op').value;
+  const a=parseFloat(document.getElementById('b-a').value);
+  if(isNaN(a)||a<0){toast('⚠ INVALID AMOUNT','red');return;}
+  const db=gDB();if(!db.users[u]){toast('⚠ NOT FOUND','red');return;}
+  if(op==='add')db.users[u].ton+=a;
+  else if(op==='sub')db.users[u].ton=Math.max(0,db.users[u].ton-a);
+  else db.users[u].ton=a;
+  sDB(db);renderBal();renderDash();toast(`✓ ${u.toUpperCase()} → ${db.users[u].ton.toFixed(4)} TON`,'green');
+}
+function qTon(n,a){
+  const db=gDB();db.users[n].ton+=a;sDB(db);renderBal();renderDash();renderUsers();
+  toast(`+${a} TON → ${n.toUpperCase()}`,'green');
+}
+function doAirdrop(){
+  const a=parseFloat(document.getElementById('air-a').value);
+  if(isNaN(a)||a<=0){toast('⚠ INVALID AMOUNT','red');return;}
+  const db=gDB();const c=Object.keys(db.users).length;
+  Object.keys(db.users).forEach(u=>db.users[u].ton+=a);
+  sDB(db);renderBal();renderDash();toast(`🚀 +${a} TON × ${c} USERS`,'green');
+}
+function resetBal(){
+  if(!confirm('Reset ALL balances to 0?'))return;
+  const db=gDB();
+  Object.keys(db.users).forEach(u=>{db.users[u].ton=0;db.users[u].refEarned=0;});
+  sDB(db);renderBal();renderDash();toast('⚠ ALL RESET','red');
+}
+
+// ENERGY
+function renderEn(){
+  const db=gDB();
+  document.getElementById('en-list').innerHTML=Object.entries(db.users).map(([n,d])=>{
+    const e=d.energy||0;const col=e>50?'var(--green)':e>20?'var(--orange)':'var(--red)';
+    return `<div class="urow">
+      <div class="av sm ${e===0?'rd':''}">${n[0].toUpperCase()}</div>
+      <div class="uinfo">
+        <div class="uname">${n.toUpperCase()}</div>
+        <div class="ebar-wrap" style="margin-top:5px;">
+          <div class="ebar-bg"><div class="ebar-fill" style="width:${e}%;background:${col}"></div></div>
+          <div class="ebar-lbl" style="color:${col}">${e}/100</div>
+        </div>
+      </div>
+      <button class="btn btn-cy btn-sm" onclick="qRefill('${n}')" style="padding:6px 10px;">⚡</button>
+    </div>`}).join('');
+}
+function doSetEnergy(){
+  const u=document.getElementById('e-u').value;
+  const e=parseInt(document.getElementById('e-a').value);
+  if(isNaN(e)){toast('⚠ INVALID','red');return;}
+  const db=gDB();db.users[u].energy=Math.min(100,Math.max(0,e));
+  sDB(db);renderEn();toast(`⚡ ${u.toUpperCase()} → ${db.users[u].energy}`,'green');
+}
+function qRefill(n){
+  const db=gDB();db.users[n].energy=100;sDB(db);renderEn();toast(`⚡ ${n.toUpperCase()} REFILLED`,'green');
+}
+function refillAll(){
+  const db=gDB();Object.keys(db.users).forEach(u=>db.users[u].energy=100);
+  sDB(db);renderEn();toast('⚡ ALL REFILLED','green');
+}
+function drainAll(){
+  if(!confirm('Drain all energy to 0?'))return;
+  const db=gDB();Object.keys(db.users).forEach(u=>db.users[u].energy=0);
+  sDB(db);renderEn();toast('🔻 ALL DRAINED','red');
+}
+
+// SETTINGS
+function loadCFG(){
+  const c=gCFG();
+  document.getElementById('c-r').value=c.miningRate;
+  document.getElementById('c-e').value=c.energyDrain;
+  document.getElementById('c-me').value=c.maxEnergy;
+  document.getElementById('c-rc').value=c.refCommission;
+  document.getElementById('c-sb').value=c.signupBonus;
+  document.getElementById('c-rb').value=c.refBonus;
+}
+function saveCFG(){
+  sCFG({
+    miningRate:parseFloat(document.getElementById('c-r').value)||0.0042,
+    energyDrain:parseInt(document.getElementById('c-e').value)||1,
+    maxEnergy:parseInt(document.getElementById('c-me').value)||100,
+    refCommission:parseFloat(document.getElementById('c-rc').value)||5,
+    signupBonus:parseFloat(document.getElementById('c-sb').value)||0.05,
+    refBonus:parseFloat(document.getElementById('c-rb').value)||0.05,
+  });
+  toast('✓ CONFIG SAVED','green');
+}
+function changeAdmin(){
+  const u=document.getElementById('a-u').value.trim();
+  const p=document.getElementById('a-p').value;
+  const c=document.getElementById('a-c').value;
+  if(!u||!p){toast('⚠ FILL ALL FIELDS','red');return;}
+  if(p!==c){toast('⚠ PASSWORDS DO NOT MATCH','red');return;}
+  localStorage.setItem(K.adm,JSON.stringify({user:u,pass:p}));
+  toast('✓ CREDENTIALS UPDATED','green');
+  ['a-u','a-p','a-c'].forEach(id=>document.getElementById(id).value='');
+}
+function nukeDB(){
+  if(!confirm('⚠ WIPE ENTIRE DATABASE? Cannot be undone!'))return;
+  [K.db,K.jobs,K.cfg].forEach(k=>localStorage.removeItem(k));
+  refreshAll();toast('💥 DATABASE WIPED','red');
+}
+</script>
+</body>
+                                                </html>
