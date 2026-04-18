@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexus Protocol</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00f5ff;
+    --purple: #a855f7;
+    --green: #00ff88;
+    --yellow: #ffd700;
+    --dark: #020818;
+    --card: rgba(0,245,255,0.04);
+    --border: rgba(0,245,255,0.15);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--dark);
+    color: #e0f7ff;
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridMove 20s linear infinite;
+    z-index:0;
+  }
+  body::after {
+    content:'';
+    position:fixed; top:-50%; left:-50%; width:200%; height:200%;
+    background: radial-gradient(ellipse at 30% 20%, rgba(168,85,247,0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(0,245,255,0.06) 0%, transparent 50%);
+    z-index:0;
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+  @keyframes gridMove { to { transform: translate(40px,40px); } }
+  @keyframes bgPulse { to { transform: scale(1.1) rotate(5deg); } }
+
+  /* ===================== SCREENS ===================== */
+  .screen {
+    display: none;
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+  }
+  .screen.active { display: block; }
+
+  /* ===================== AUTH SCREEN ===================== */
+  .auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 24px;
+  }
+  .auth-logo {
+    font-family: 'Orbitron', monospace;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #fff;
+    text-shadow: 0 0 30px rgba(0,245,255,0.5);
+    margin-bottom: 6px;
+    text-align: center;
+  }
+  .auth-sub {
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(0,245,255,0.5);
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  .auth-orb {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(0,245,255,0.2), rgba(2,8,24,0.9) 70%);
+    border: 2px solid rgba(0,245,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 40px;
+    animation: orbFloat 4s ease-in-out infinite;
+    box-shadow: 0 0 40px rgba(0,245,255,0.15);
+    font-size: 36px;
+  }
+  @keyframes orbFloat {
+    0%,100% { transform: translateY(0); box-shadow: 0 0 40px rgba(0,245,255,0.15); }
+    50% { transform: translateY(-10px); box-shadow: 0 0 60px rgba(0,245,255,0.3); }
+  }
+  .auth-tabs {
+    display: flex;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    width: 100%;
+    max-width: 360px;
+    margin-bottom: 24px;
+  }
+  .auth-tab {
+    flex: 1; padding: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    border: none; background: none;
+    color: rgba(255,255,255,0.35);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .auth-tab.active {
+    background: linear-gradient(135deg, rgba(0,245,255,0.15), rgba(168,85,247,0.1));
+    color: var(--cyan);
+    border: 1px solid rgba(0,245,255,0.2);
+  }
+  .auth-form { width: 100%; max-width: 360px; }
+  .input-group { margin-bottom: 14px; position: relative; }
+  .input-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(0,245,255,0.6);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .input-field {
+    width: 100%;
+    padding: 13px 16px;
+    background: rgba(0,245,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .input-field:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0,245,255,0.1);
+  }
+  .input-field::placeholder { color: rgba(255,255,255,0.2); }
+  .ref-hint {
+    font-size: 11px;
+    color: rgba(0,245,255,0.4);
+    margin-top: 4px;
+    display: block;
+  }
+  .auth-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(0,245,255,0.12), rgba(168,85,247,0.1));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 8px;
+    position: relative; overflow: hidden;
+  }
+  .auth-btn::before {
+    content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+    background: linear-gradient(90deg, transparent, rgba(0,245,255,0.1), transparent);
+    transition: left 0.5s;
+  }
+  .auth-btn:hover::before { left:100%; }
+  .auth-btn:hover { border-color: var(--cyan); box-shadow: 0 0 20px rgba(0,245,255,0.2); }
+  .auth-error {
+    color: #ff4d6d;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 10px;
+    min-height: 18px;
+    font-family: 'Orbitron', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ===================== MAIN APP ===================== */
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+    position: relative;
+    z-index: 1;
+  }
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0 12px;
+  }
+  .header-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px; font-weight: 700; letter-spacing: 2px; color: #fff;
+  }
+  .header-user {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 12px 5px 5px;
+  }
+  .user-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #000;
+    font-family: 'Orbitron', monospace;
+  }
+  .user-name { font-size: 12px; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+  .logout-btn {
+    background: none; border: none; color: rgba(255,255,255,0.3);
+    cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.2s;
+  }
+  .logout-btn:hover { color: #ff4d6d; }
+  .divider { height:1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 8px 0; }
+
+  /* Orb */
+  .node-section { display:flex; flex-direction:column; align-items:center; padding: 24px 0 16px; }
+  .orb-wrapper { position:relative; width:200px; height:200px; display:flex; align-items:center; justify-content:center; }
+  .orb-ring-outer { position:absolute; inset:0; border-radius:50%; border:2px dashed rgba(0,245,255,0.3); animation:rotateSlow 20s linear infinite; }
+  .orb-ring-inner { position:absolute; inset:12px; border-radius:50%; border:1.5px solid transparent; background: linear-gradient(var(--dark),var(--dark)) padding-box, linear-gradient(135deg,var(--purple),var(--cyan)) border-box; animation:rotateSlow 10s linear infinite reverse; }
+  .orb-glow-ring { position:absolute; inset:20px; border-radius:50%; border:2px solid rgba(168,85,247,0.4); box-shadow:0 0 20px rgba(168,85,247,0.2),inset 0 0 20px rgba(168,85,247,0.1); }
+  @keyframes rotateSlow { to { transform:rotate(360deg); } }
+  .orb-core { width:138px; height:138px; border-radius:50%; background:radial-gradient(circle at 40% 35%, rgba(0,245,255,0.15), rgba(2,8,24,0.9) 70%); border:1px solid rgba(0,245,255,0.2); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s; }
+  .orb-core:hover { box-shadow:0 0 40px rgba(0,245,255,0.3); border-color:rgba(0,245,255,0.5); }
+  .orb-core.active { animation:orbPulse 2s ease-in-out infinite; }
+  @keyframes orbPulse { 0%,100%{box-shadow:0 0 20px rgba(0,245,255,0.2);}50%{box-shadow:0 0 60px rgba(0,245,255,0.5),0 0 100px rgba(0,245,255,0.2);} }
+  .network-svg { width:80px; height:80px; opacity:0.8; }
+  .net-node { fill:var(--cyan); filter:drop-shadow(0 0 4px var(--cyan)); animation:nodeBlink 3s ease-in-out infinite; }
+  .net-node:nth-child(2){animation-delay:0.5s} .net-node:nth-child(3){animation-delay:1s} .net-node:nth-child(4){animation-delay:1.5s} .net-node:nth-child(5){animation-delay:0.8s} .net-node:nth-child(6){animation-delay:2s}
+  @keyframes nodeBlink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .net-line { stroke:rgba(0,245,255,0.4); stroke-width:0.8; animation:linePulse 3s ease-in-out infinite; }
+  @keyframes linePulse { 0%,100%{opacity:0.4}50%{opacity:0.1} }
+  .status-badge { margin-top:14px; background:rgba(0,245,255,0.08); border:1px solid rgba(0,245,255,0.2); border-radius:20px; padding:5px 18px; font-family:'Orbitron',monospace; font-size:10px; letter-spacing:3px; color:var(--cyan); }
+  .status-badge.mining { color:var(--green); border-color:rgba(0,255,136,0.3); background:rgba(0,255,136,0.08); animation:statusGlow 1.5s ease-in-out infinite alternate; }
+  @keyframes statusGlow { from{box-shadow:0 0 5px rgba(0,255,136,0.2)}to{box-shadow:0 0 15px rgba(0,255,136,0.4)} }
+
+  /* Buttons */
+  .init-btn { width:100%; padding:16px; background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(168,85,247,0.08)); border:1px solid var(--border); border-radius:14px; color:#fff; font-family:'Orbitron',monospace; font-size:12px; font-weight:600; letter-spacing:2px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden; margin:6px 0; }
+  .init-btn::before { content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg,transparent,rgba(0,245,255,0.1),transparent); transition:left 0.5s; }
+  .init-btn:hover::before{left:100%} .init-btn:hover{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,245,255,0.2),inset 0 0 20px rgba(0,245,255,0.05);}
+  .init-btn:active{transform:scale(0.98)}
+  .init-btn.active-mining{border-color:var(--green);background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,245,255,0.05));animation:btnGlow 2s ease-in-out infinite alternate;}
+  @keyframes btnGlow{from{box-shadow:0 0 10px rgba(0,255,136,0.2)}to{box-shadow:0 0 25px rgba(0,255,136,0.4)}}
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:10px 0; }
+  .stat-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; transition:border-color 0.3s; }
+  .stat-card:hover{border-color:rgba(0,245,255,0.3)}
+  .stat-label { font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; color:rgba(0,245,255,0.6); margin-bottom:6px; }
+  .stat-value { font-family:'Orbitron',monospace; font-size:20px; font-weight:700; color:#fff; }
+  .stat-value.ton { font-size:16px; color:var(--cyan); }
+  .stat-unit { font-size:10px; color:var(--cyan); }
+  .spin-btn { width:100%; padding:14px; background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(0,245,255,0.05)); border:1px solid rgba(168,85,247,0.3); border-radius:14px; color:#fff; font-family:'Orbitron',monospace; font-size:11px; font-weight:600; letter-spacing:2px; cursor:pointer; transition:all 0.3s; margin:10px 0; }
+  .spin-btn:hover{border-color:var(--purple);box-shadow:0 0 20px rgba(168,85,247,0.2);}
+  .energy-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin:10px 0; }
+  .energy-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .energy-title { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; color:rgba(255,255,255,0.7); display:flex; align-items:center; gap:8px; }
+  .energy-dot { width:8px; height:8px; background:var(--cyan); border-radius:50%; box-shadow:0 0 8px var(--cyan); animation:dotPulse 1.5s ease-in-out infinite; }
+  @keyframes dotPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+  .energy-val { font-family:'Orbitron',monospace; font-size:13px; font-weight:700; color:var(--green); }
+  .energy-bar-bg { height:8px; background:rgba(255,255,255,0.06); border-radius:10px; overflow:hidden; margin-bottom:8px; }
+  .energy-bar-fill { height:100%; background:linear-gradient(90deg,#00c878,#00ff88); border-radius:10px; box-shadow:0 0 10px rgba(0,255,136,0.4); transition:width 0.5s ease; }
+  .energy-regen { font-size:11px; color:rgba(255,255,255,0.3); text-align:center; }
+
+  /* ===================== LEADERBOARD ===================== */
+  .page-title { font-family:'Orbitron',monospace; font-size:14px; letter-spacing:3px; color:var(--cyan); padding: 20px 0 16px; text-align:center; }
+  .rank-tabs { display:flex; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:12px; padding:4px; margin-bottom:16px; }
+  .rank-tab { flex:1; padding:9px; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; border:none; background:none; color:rgba(255,255,255,0.3); border-radius:9px; cursor:pointer; transition:all 0.3s; }
+  .rank-tab.active { background:linear-gradient(135deg,rgba(0,245,255,0.12),rgba(168,85,247,0.08)); color:var(--cyan); border:1px solid rgba(0,245,255,0.2); }
+  .rank-list { display:flex; flex-direction:column; gap:8px; }
+  .rank-item { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px; transition:all 0.3s; }
+  .rank-item:hover{border-color:rgba(0,245,255,0.25); transform:translateX(3px);}
+  .rank-item.me { border-color:rgba(0,245,255,0.3); background:rgba(0,245,255,0.06); }
+  .rank-pos { font-family:'Orbitron',monospace; font-size:13px; font-weight:700; width:28px; text-align:center; }
+  .rank-pos.gold { color:var(--yellow); text-shadow:0 0 10px rgba(255,215,0,0.5); }
+  .rank-pos.silver { color:#c0c0c0; }
+  .rank-pos.bronze { color:#cd7f32; }
+  .rank-pos.other { color:rgba(255,255,255,0.4); }
+  .rank-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#000; font-family:'Orbitron',monospace; flex-shrink:0; }
+  .rank-info { flex:1; }
+  .rank-name { font-size:14px; font-weight:600; color:#fff; letter-spacing:0.5px; }
+  .rank-detail { font-size:11px; color:rgba(255,255,255,0.35); letter-spacing:0.5px; margin-top:2px; }
+  .rank-score { text-align:right; }
+  .rank-ton { font-family:'Orbitron',monospace; font-size:13px; font-weight:700; color:var(--cyan); }
+  .rank-label { font-size:9px; color:rgba(0,245,255,0.5); letter-spacing:1px; }
+  .my-rank-banner { background:linear-gradient(135deg,rgba(0,245,255,0.08),rgba(168,85,247,0.06)); border:1px solid rgba(0,245,255,0.25); border-radius:14px; padding:14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; }
+  .my-rank-label { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; color:rgba(0,245,255,0.6); }
+  .my-rank-num { font-family:'Orbitron',monospace; font-size:24px; font-weight:800; color:var(--cyan); }
+
+  /* ===================== REFERRAL ===================== */
+  .ref-card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:14px; }
+  .ref-card-title { font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; color:rgba(0,245,255,0.6); margin-bottom:14px; }
+  .ref-code-box { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(0,245,255,0.2); border-radius:10px; padding:12px 14px; margin-bottom:12px; }
+  .ref-code-val { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--cyan); letter-spacing:4px; flex:1; }
+  .copy-btn { background:rgba(0,245,255,0.1); border:1px solid rgba(0,245,255,0.2); border-radius:8px; color:var(--cyan); padding:6px 12px; font-family:'Orbitron',monospace; font-size:9px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; }
+  .copy-btn:hover{background:rgba(0,245,255,0.2);}
+  .ref-link-box { background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:12px; color:rgba(255,255,255,0.4); word-break:break-all; margin-bottom:12px; }
+  .share-btn { width:100%; padding:13px; background:linear-gradient(135deg,rgba(0,255,136,0.1),rgba(0,245,255,0.06)); border:1px solid rgba(0,255,136,0.3); border-radius:12px; color:var(--green); font-family:'Orbitron',monospace; font-size:11px; letter-spacing:2px; cursor:pointer; transition:all 0.3s; }
+  .share-btn:hover{box-shadow:0 0 20px rgba(0,255,136,0.2);}
+  .ref-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+  .ref-stat { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; text-align:center; }
+  .ref-stat-val { font-family:'Orbitron',monospace; font-size:20px; font-weight:700; color:var(--cyan); }
+  .ref-stat-lbl { font-size:10px; color:rgba(255,255,255,0.35); letter-spacing:1px; margin-top:4px; }
+  .ref-list { display:flex; flex-direction:column; gap:8px; }
+  .ref-item { display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .ref-item-avatar { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--purple),var(--cyan)); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#000; font-family:'Orbitron',monospace; }
+  .ref-item-info { flex:1; }
+  .ref-item-name { font-size:14px; font-weight:600; color:#fff; }
+  .ref-item-date { font-size:10px; color:rgba(255,255,255,0.3); margin-top:2px; }
+  .ref-item-earn { font-family:'Orbitron',monospace; font-size:12px; color:var(--green); }
+  .empty-ref { text-align:center; padding:30px; color:rgba(255,255,255,0.25); font-size:13px; letter-spacing:1px; }
+
+  /* ===================== NAV ===================== */
+  .bottom-nav { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:100%; max-width:480px; background:rgba(2,8,24,0.97); backdrop-filter:blur(20px); border-top:1px solid var(--border); display:flex; justify-content:space-around; align-items:center; padding:10px 0 16px; z-index:100; }
+  .nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; transition:all 0.2s; padding:4px 10px; border-radius:10px; }
+  .nav-item:hover{background:rgba(0,245,255,0.05);}
+  .nav-item.active .nav-icon{color:var(--cyan);filter:drop-shadow(0 0 6px var(--cyan));}
+  .nav-item.active .nav-label{color:var(--cyan);}
+  .nav-item.active{position:relative;}
+  .nav-item.active::after{content:'';position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan);}
+  .nav-icon{font-size:19px;color:rgba(255,255,255,0.35);transition:all 0.2s;}
+  .nav-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);transition:color 0.2s;}
+
+  /* ===================== TOAST ===================== */
+  .toast { position:fixed; top:70px; left:50%; transform:translateX(-50%) translateY(-20px); background:rgba(0,245,255,0.1); border:1px solid rgba(0,245,255,0.3); border-radius:10px; padding:10px 24px; font-family:'Orbitron',monospace; font-size:10px; letter-spacing:1px; color:var(--cyan); z-index:9999; opacity:0; transition:all 0.3s; pointer-events:none; white-space:nowrap; }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast.green{color:var(--green);border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.1);}
+  .toast.red{color:#ff4d6d;border-color:rgba(255,77,109,0.3);background:rgba(255,77,109,0.08);}
+
+  /* Particles */
+  .particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .particle{position:absolute;width:2px;height:2px;background:var(--cyan);border-radius:50%;box-shadow:0 0 4px var(--cyan);animation:floatUp linear infinite;opacity:0;}
+  @keyframes floatUp{0%{transform:translateY(100vh) translateX(0);opacity:0;}10%{opacity:0.6;}90%{opacity:0.3;}100%{transform:translateY(-10vh) translateX(var(--drift));opacity:0;}}
+
+  /* Hidden */
+  .hidden { display: none !important; }
+
+  /* Section padding */
+  .page-content { padding-bottom: 30px; }
+</style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+<div class="toast" id="toast"></div>
+
+<!-- =================== AUTH SCREEN =================== -->
+<div class="screen active" id="authScreen">
+  <div class="auth-wrap">
+    <div class="auth-logo">NEXUS PROTOCOL</div>
+    <div class="auth-sub">DECENTRALIZED MINING NETWORK</div>
+    <div class="auth-orb">⬡</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">LOGIN</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">SIGN UP</button>
+    </div>
+
+    <!-- Login Form -->
+    <div class="auth-form" id="loginForm">
+      <div class="input-group">
+        <label class="input-label">USERNAME</label>
+        <input class="input-field" id="loginUser" type="text" placeholder="Enter username">
+      </div>
+      <div class="input-group">
+        <label class="input-label">PASSWORD</label>
+        <input class="input-field" id="loginPass" type="password" placeholder="Enter password">
+      </div>
+      <button class="auth-btn" onclick="doLogin()">⚡ CONNECT NODE</button>
+      <div class="auth-error" id="loginError"></div>
+    </div>
+
+    <!-- Signup Form -->
+    <div class="auth-form hidden" id="signupForm">
+      <div class="input-group">
+        <label class="input-label">USERNAME</label>
+        <input class="input-field" id="signUser" type="text" placeholder="Choose username">
+      </div>
+      <div class="input-group">
+        <label class="input-label">PASSWORD</label>
+        <input class="input-field" id="signPass" type="password" placeholder="Choose password">
+      </div>
+      <div class="input-group">
+        <label class="input-label">REFERRAL CODE <span style="color:rgba(255,255,255,0.25)">(OPTIONAL)</span></label>
+        <input class="input-field" id="signRef" type="text" placeholder="Enter referral code (optional)">
+        <span class="ref-hint">★ Both you and your referrer earn 0.05 TON bonus!</span>
+      </div>
+      <button class="auth-btn" onclick="doSignup()">✦ CREATE NODE</button>
+      <div class="auth-error" id="signError"></div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MAIN APP =================== -->
+<div class="screen" id="appScreen">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <span class="header-title">NEXUS</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="header-user">
+          <div class="user-avatar" id="headerAvatar">N</div>
+          <span class="user-name" id="headerName">USER</span>
+        </div>
+        <button class="logout-btn" onclick="doLogout()" title="Logout">⏏</button>
+      </div>
+    </div>
+    <div class="divider"></div>
+
+    <!-- TAB PAGES -->
+
+    <!-- NODE PAGE -->
+    <div id="nodePage" class="page-content">
+      <div class="node-section">
+        <div class="orb-wrapper">
+          <div class="orb-ring-outer"></div>
+          <div class="orb-ring-inner"></div>
+          <div class="orb-glow-ring"></div>
+          <div class="orb-core" id="orbCore">
+            <svg class="network-svg" viewBox="0 0 90 90" fill="none">
+              <line class="net-line" x1="45" y1="45" x2="20" y2="20"/>
+              <line class="net-line" x1="45" y1="45" x2="70" y2="22"/>
+              <line class="net-line" x1="45" y1="45" x2="72" y2="55"/>
+              <line class="net-line" x1="45" y1="45" x2="55" y2="72"/>
+              <line class="net-line" x1="45" y1="45" x2="22" y2="65"/>
+              <line class="net-line" x1="45" y1="45" x2="15" y2="50"/>
+              <line class="net-line" x1="20" y1="20" x2="70" y2="22"/>
+              <line class="net-line" x1="70" y1="22" x2="72" y2="55"/>
+              <line class="net-line" x1="72" y1="55" x2="55" y2="72"/>
+              <line class="net-line" x1="55" y1="72" x2="22" y2="65"/>
+              <circle class="net-node" cx="45" cy="45" r="5"/>
+              <circle class="net-node" cx="20" cy="20" r="3"/>
+              <circle class="net-node" cx="70" cy="22" r="3"/>
+              <circle class="net-node" cx="72" cy="55" r="3"/>
+              <circle class="net-node" cx="55" cy="72" r="3"/>
+              <circle class="net-node" cx="22" cy="65" r="3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="status-badge" id="statusBadge">STATUS: IDLE</div>
+      </div>
+
+      <button class="init-btn" id="initBtn" onclick="toggleMining()">✦ INITIALIZE NODE</button>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Streak</div>
+          <div class="stat-value" id="streakVal">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">TON Balance</div>
+          <div class="stat-value ton" id="tonVal">0.0000 <span class="stat-unit">TON</span></div>
+        </div>
+      </div>
+
+      <button class="spin-btn" onclick="doSpin()">🎰 DAILY QUANTUM SPIN</button>
+
+      <div class="energy-card">
+        <div class="energy-header">
+          <div class="energy-title">
+            <div class="energy-dot"></div>
+            MINING ENERGY
+          </div>
+          <div class="energy-val" id="energyVal">100/100</div>
+        </div>
+        <div class="energy-bar-bg">
+          <div class="energy-bar-fill" id="energyBar" style="width:100%"></div>
+        </div>
+        <div class="energy-regen">Regenerates 10 energy/hour</div>
+      </div>
+    </div>
+
+    <!-- RANK PAGE -->
+    <div id="rankPage" class="page-content hidden">
+      <div class="page-title">⬟ LEADERBOARD</div>
+
+      <div class="my-rank-banner">
+        <div>
+          <div class="my-rank-label">YOUR RANK</div>
+          <div class="my-rank-num" id="myRankNum">#—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="my-rank-label">YOUR BALANCE</div>
+          <div style="font-family:'Orbitron',monospace;font-size:18px;color:var(--cyan)" id="myRankTon">0.0000</div>
+          <div style="font-size:9px;color:rgba(0,245,255,0.5);letter-spacing:1px">TON</div>
+        </div>
+      </div>
+
+      <div class="rank-tabs">
+        <button class="rank-tab active" onclick="switchRankTab('all',this)">ALL TIME</button>
+        <button class="rank-tab" onclick="switchRankTab('weekly',this)">WEEKLY</button>
+        <button class="rank-tab" onclick="switchRankTab('referral',this)">REFERRALS</button>
+      </div>
+
+      <div class="rank-list" id="rankList"></div>
+    </div>
+
+    <!-- REFERRAL PAGE -->
+    <div id="refPage" class="page-content hidden">
+      <div class="page-title">★ REFERRAL SYSTEM</div>
+
+      <div class="ref-stats">
+        <div class="ref-stat">
+          <div class="ref-stat-val" id="refCount">0</div>
+          <div class="ref-stat-lbl">REFERRED</div>
+        </div>
+        <div class="ref-stat">
+          <div class="ref-stat-val" id="refEarned">0.00</div>
+          <div class="ref-stat-lbl">TON EARNED</div>
+        </div>
+        <div class="ref-stat">
+          <div class="ref-stat-val">5%</div>
+          <div class="ref-stat-lbl">COMMISSION</div>
+        </div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-card-title">YOUR REFERRAL CODE</div>
+        <div class="ref-code-box">
+          <div class="ref-code-val" id="myRefCode">——</div>
+          <button class="copy-btn" onclick="copyRefCode()">COPY</button>
+        </div>
+        <div class="ref-link-box" id="refLinkBox">nexus.protocol/ref/——</div>
+        <button class="share-btn" onclick="shareRef()">⬆ SHARE REFERRAL LINK</button>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-card-title">HOW IT WORKS</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:11px;color:var(--cyan);flex-shrink:0">1</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);padding-top:5px">Share your unique referral code with friends</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:11px;color:var(--cyan);flex-shrink:0">2</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);padding-top:5px">They sign up using your code — both get <span style="color:var(--green)">+0.05 TON</span> bonus</div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div style="width:28px;height:28px;border-radius:50%;background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:11px;color:var(--cyan);flex-shrink:0">3</div>
+            <div style="font-size:13px;color:rgba(255,255,255,0.6);padding-top:5px">Earn <span style="color:var(--cyan)">5% commission</span> on all their future mining rewards</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ref-card">
+        <div class="ref-card-title">YOUR REFERRALS (<span id="refListCount">0</span>)</div>
+        <div class="ref-list" id="refList">
+          <div class="empty-ref">No referrals yet.<br>Share your code to earn!</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end container -->
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('node',this)">
+      <div class="nav-icon">⬡</div>
+      <div class="nav-label">NODE</div>
+    </div>
+    <div class="nav-item" onclick="showPage('job',this)">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">JOB</div>
+    </div>
+    <div class="nav-item" onclick="showPage('ref',this)">
+      <div class="nav-icon">★</div>
+      <div class="nav-label">REFER</div>
+    </div>
+    <div class="nav-item" onclick="showPage('vault',this)">
+      <div class="nav-icon">🔐</div>
+      <div class="nav-label">VAULT</div>
+    </div>
+    <div class="nav-item" onclick="showPage('rank',this)">
+      <div class="nav-icon">📊</div>
+      <div class="nav-label">RANK</div>
+    </div>
+    <div class="nav-item" onclick="showPage('sys',this)">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">SYS</div>
+    </div>
+  </nav>
+</div><!-- end appScreen -->
+
+<script>
+// =================== DATA STORE ===================
+let DB = JSON.parse(localStorage.getItem('nexusDB') || 'null') || {
+  users: {
+    // demo accounts
+    "demo": { pass:"demo123", ton:12.4820, energy:80, streak:7, refCode:"DEMO01", referredBy:null, referrals:["alice","bob"], refEarned:0.62, spinUsed:false, miningStreak:7 },
+    "alice": { pass:"alice123", ton:8.2100, energy:100, streak:3, refCode:"ALIC42", referredBy:"demo", referrals:[], refEarned:0, spinUsed:false, miningStreak:3 },
+    "bob":   { pass:"bob123",   ton:5.9900, energy:60,  streak:2, refCode:"BOB99X", referredBy:"demo", referrals:[], refEarned:0, spinUsed:false, miningStreak:2 },
+    "crypto_k": { pass:"pass", ton:21.3300, energy:100, streak:15, refCode:"CRYPT0", referredBy:null, referrals:[], refEarned:0, spinUsed:false, miningStreak:15 },
+    "nexus_lord": { pass:"pass", ton:38.9900, energy:100, streak:22, refCode:"NEXL0R", referredBy:null, referrals:[], refEarned:0, spinUsed:false, miningStreak:22 },
+  }
+};
+function saveDB() { localStorage.setItem('nexusDB', JSON.stringify(DB)); }
+
+let currentUser = null;
+let isMining = false;
+let miningInterval = null;
+let spinUsed = false;
+
+// =================== PARTICLES ===================
+const pc = document.getElementById('particles');
+for(let i=0;i<20;i++){
+  const p=document.createElement('div'); p.className='particle';
+  p.style.left=Math.random()*100+'%';
+  p.style.animationDuration=(6+Math.random()*12)+'s';
+  p.style.animationDelay=(Math.random()*10)+'s';
+  p.style.setProperty('--drift',(Math.random()*60-30)+'px');
+  if(Math.random()>0.5){p.style.background='#a855f7';p.style.boxShadow='0 0 4px #a855f7';}
+  pc.appendChild(p);
+}
+
+// =================== TOAST ===================
+function toast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(type?type:'');
+  void t.offsetWidth;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// =================== AUTH ===================
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>{
+    b.classList.toggle('active', (tab==='login'&&i===0)||(tab==='signup'&&i===1));
+  });
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('signupForm').classList.toggle('hidden', tab!=='signup');
+}
+
+function doLogin() {
+  const u=document.getElementById('loginUser').value.trim().toLowerCase();
+  const p=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginError');
+  if(!u||!p){err.textContent='⚠ FILL ALL FIELDS'; return;}
+  if(!DB.users[u]){err.textContent='⚠ USER NOT FOUND'; return;}
+  if(DB.users[u].pass!==p){err.textContent='⚠ WRONG PASSWORD'; return;}
+  err.textContent='';
+  loginUser(u);
+}
+
+function doSignup() {
+  const u=document.getElementById('signUser').value.trim().toLowerCase();
+  const p=document.getElementById('signPass').value;
+  const ref=document.getElementById('signRef').value.trim().toUpperCase();
+  const err=document.getElementById('signError');
+  if(!u||!p){err.textContent='⚠ FILL ALL FIELDS'; return;}
+  if(u.length<3){err.textContent='⚠ USERNAME TOO SHORT'; return;}
+  if(p.length<6){err.textContent='⚠ PASSWORD MIN 6 CHARS'; return;}
+  if(DB.users[u]){err.textContent='⚠ USERNAME TAKEN'; return;}
+
+  // Check referral
+  let referredBy=null;
+  if(ref) {
+    const refOwner=Object.keys(DB.users).find(k=>DB.users[k].refCode===ref);
+    if(!refOwner){err.textContent='⚠ INVALID REFERRAL CODE'; return;}
+    referredBy=refOwner;
+  }
+
+  // Create user
+  const code=u.substring(0,3).toUpperCase()+Math.floor(Math.random()*900+100);
+  DB.users[u]={pass:p, ton:referredBy?0.05:0, energy:100, streak:0, refCode:code, referredBy:referredBy, referrals:[], refEarned:0, spinUsed:false, miningStreak:0};
+
+  // Reward referrer
+  if(referredBy) {
+    DB.users[referredBy].ton+=0.05;
+    DB.users[referredBy].referrals.push(u);
+    DB.users[referredBy].refEarned+=0.05;
+  }
+  saveDB();
+  err.textContent='';
+  if(referredBy) toast('🎉 +0.05 TON REFERRAL BONUS!','green');
+  loginUser(u);
+}
+
+function loginUser(u) {
+  currentUser=u;
+  const ud=DB.users[u];
+  document.getElementById('headerAvatar').textContent=u[0].toUpperCase();
+  document.getElementById('headerName').textContent=u.toUpperCase();
+  document.getElementById('myRefCode').textContent=ud.refCode;
+  document.getElementById('refLinkBox').textContent='nexus.protocol/ref/'+ud.refCode;
+  document.getElementById('authScreen').classList.remove('active');
+  document.getElementById('appScreen').classList.add('active');
+  spinUsed=ud.spinUsed||false;
+  renderAll();
+  toast('⚡ NODE CONNECTED','green');
+}
+
+function doLogout() {
+  if(isMining) stopMining();
+  saveDB();
+  currentUser=null;
+  document.getElementById('appScreen').classList.remove('active');
+  document.getElementById('authScreen').classList.add('active');
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  showPage('node', document.querySelector('.nav-item'));
+  toast('DISCONNECTED');
+}
+
+// =================== MINING ===================
+function toggleMining() {
+  const ud=DB.users[currentUser];
+  if(ud.energy<=0){toast('⚡ NO ENERGY','red'); return;}
+  isMining=!isMining;
+  const btn=document.getElementById('initBtn');
+  const badge=document.getElementById('statusBadge');
+  const orb=document.getElementById('orbCore');
+  if(isMining){
+    btn.textContent='⏹ STOP NODE'; btn.classList.add('active-mining');
+    badge.textContent='STATUS: MINING'; badge.classList.add('mining');
+    orb.classList.add('active');
+    ud.streak++; ud.miningStreak++;
+    miningInterval=setInterval(()=>{
+      if(ud.energy>0){
+        ud.energy=Math.max(0,ud.energy-1);
+        ud.ton+=0.0042;
+        // 5% commission to referrer
+        if(ud.referredBy && DB.users[ud.referredBy]){
+          DB.users[ud.referredBy].ton+=0.0042*0.05;
+          DB.users[ud.referredBy].refEarned+=0.0042*0.05;
+        }
+        renderStats(); saveDB();
+        if(ud.energy<=0){stopMining();toast('⚡ ENERGY DEPLETED','red');}
+      }
+    },800);
+    toast('⚡ NODE INITIALIZED','green');
+  } else {
+    stopMining(); toast('✓ NODE STOPPED');
+  }
+}
+
+function stopMining(){
+  isMining=false; clearInterval(miningInterval);
+  const btn=document.getElementById('initBtn');
+  btn.textContent='✦ INITIALIZE NODE'; btn.classList.remove('active-mining');
+  document.getElementById('statusBadge').textContent='STATUS: IDLE';
+  document.getElementById('statusBadge').classList.remove('mining');
+  document.getElementById('orbCore').classList.remove('active');
+  saveDB();
+}
+
+function doSpin(){
+  if(spinUsed){toast('⏳ NEXT SPIN IN 24H'); return;}
+  const ud=DB.users[currentUser];
+  const reward=parseFloat((Math.random()*0.5+0.01).toFixed(4));
+  ud.ton+=reward; spinUsed=true; ud.spinUsed=true;
+  renderStats(); saveDB();
+  toast('🎰 WON '+reward.toFixed(4)+' TON!','green');
+  setTimeout(()=>{spinUsed=false; ud.spinUsed=false; saveDB();}, 10000);
+}
+
+// =================== RENDER ===================
+function renderStats(){
+  const ud=DB.users[currentUser];
+  document.getElementById('streakVal').textContent=ud.streak;
+  document.getElementById('tonVal').innerHTML=ud.ton.toFixed(4)+' <span class="stat-unit">TON</span>';
+  document.getElementById('energyVal').textContent=ud.energy+'/100';
+  document.getElementById('energyBar').style.width=ud.energy+'%';
+}
+
+function renderLeaderboard(type='all'){
+  const list=document.getElementById('rankList');
+  let users=Object.entries(DB.users).map(([n,d])=>({name:n,...d}));
+  if(type==='all') users.sort((a,b)=>b.ton-a.ton);
+  else if(type==='weekly') users.sort((a,b)=>b.miningStreak-a.miningStreak);
+  else if(type==='referral') users.sort((a,b)=>b.referrals.length-a.referrals.length);
+
+  const myRank=users.findIndex(u=>u.name===currentUser)+1;
+  document.getElementById('myRankNum').textContent='#'+myRank;
+  document.getElementById('myRankTon').textContent=DB.users[currentUser].ton.toFixed(4);
+
+  list.innerHTML=users.slice(0,10).map((u,i)=>{
+    const pos=i+1;
+    const posClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'other';
+    const posLabel=pos===1?'🥇':pos===2?'🥈':pos===3?'🥉':'#'+pos;
+    const isMe=u.name===currentUser;
+    const val=type==='referral'?u.referrals.length+' refs':type==='weekly'?u.miningStreak+' days':u.ton.toFixed(4)+' TON';
+    return `<div class="rank-item ${isMe?'me':''}">
+      <div class="rank-pos ${posClass}">${posLabel}</div>
+      <div class="rank-avatar">${u.name[0].toUpperCase()}</div>
+      <div class="rank-info">
+        <div class="rank-name">${u.name.toUpperCase()}${isMe?' <span style="font-size:10px;color:var(--cyan)">(YOU)</span>':''}</div>
+        <div class="rank-detail">Streak: ${u.streak} days</div>
+      </div>
+      <div class="rank-score">
+        <div class="rank-ton">${val}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderReferral(){
+  const ud=DB.users[currentUser];
+  document.getElementById('refCount').textContent=ud.referrals.length;
+  document.getElementById('refEarned').textContent=ud.refEarned.toFixed(4);
+  document.getElementById('refListCount').textContent=ud.referrals.length;
+  const list=document.getElementById('refList');
+  if(ud.referrals.length===0){
+    list.innerHTML='<div class="empty-ref">No referrals yet.<br>Share your code to earn!</div>';
+  } else {
+    list.innerHTML=ud.referrals.map(r=>{
+      const ru=DB.users[r];
+      return `<div class="ref-item">
+        <div class="ref-item-avatar">${r[0].toUpperCase()}</div>
+        <div class="ref-item-info">
+          <div class="ref-item-name">${r.toUpperCase()}</div>
+          <div class="ref-item-date">Active miner</div>
+        </div>
+        <div class="ref-item-earn">+${(ru?ru.ton*0.05:0).toFixed(4)} TON</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderAll(){
+  renderStats(); renderLeaderboard(); renderReferral();
+}
+
+function switchRankTab(type, el){
+  document.querySelectorAll('.rank-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderLeaderboard(type);
+}
+
+// =================== NAVIGATION ===================
+function showPage(page, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('nodePage').classList.add('hidden');
+  document.getElementById('rankPage').classList.add('hidden');
+  document.getElementById('refPage').classList.add('hidden');
+  if(page==='node') document.getElementById('nodePage').classList.remove('hidden');
+  else if(page==='rank'){document.getElementById('rankPage').classList.remove('hidden'); renderLeaderboard();}
+  else if(page==='ref'){document.getElementById('refPage').classList.remove('hidden'); renderReferral();}
+  else toast('COMING SOON');
+}
+
+// =================== COPY / SHARE ===================
+function copyRefCode(){
+  const code=DB.users[currentUser].refCode;
+  navigator.clipboard.writeText(code).then(()=>toast('✓ CODE COPIED','green')).catch(()=>toast('CODE: '+code));
+}
+function shareRef(){
+  const code=DB.users[currentUser].refCode;
+  if(navigator.share){
+    navigator.share({title:'Nexus Protocol', text:'Join Nexus Protocol! Use my code '+code+' for +0.05 TON bonus!', url:'https://nexus.protocol/ref/'+code});
+  } else {
+    navigator.clipboard.writeText('nexus.protocol/ref/'+code).then(()=>toast('✓ LINK COPIED','green')).catch(()=>toast('LINK COPIED'));
+  }
+}
+</script>
+</body>
+  </html>
